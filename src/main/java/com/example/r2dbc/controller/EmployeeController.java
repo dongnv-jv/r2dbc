@@ -2,6 +2,7 @@ package com.example.r2dbc.controller;
 
 import com.example.r2dbc.entity.Employee;
 import com.example.r2dbc.repository.EmployeeRepository;
+import com.example.r2dbc.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +27,9 @@ public class EmployeeController {
   @Autowired
   private EmployeeRepository employeeRepository;
 
+  @Autowired
+  private EmployeeService employeeService;
+
   @PostMapping
   public Mono<Employee> saveEmployee(@RequestBody Employee employee){
     return employeeRepository.save(employee);
@@ -49,6 +53,6 @@ public class EmployeeController {
 
   @GetMapping
   public Flux<Employee> findAll(){
-    return employeeRepository.findAll();
+    return employeeService.get();
   }
 }
