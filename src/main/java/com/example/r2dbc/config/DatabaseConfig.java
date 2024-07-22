@@ -1,5 +1,7 @@
 package com.example.r2dbc.config;
 
+import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.pool.ConnectionPoolConfiguration;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
@@ -11,6 +13,8 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.transaction.ReactiveTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.reactive.TransactionalOperator;
+
+import java.time.Duration;
 
 import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
@@ -26,7 +30,7 @@ public class DatabaseConfig {
 
     @Bean
     public ConnectionFactory connectionFactory() {
-        return ConnectionFactories.get(
+        ConnectionFactory connectionFactory = ConnectionFactories.get(
                 ConnectionFactoryOptions.builder()
                         .option(DRIVER, "postgresql")
                         .option(HOST, "localhost")
@@ -36,7 +40,15 @@ public class DatabaseConfig {
                         .option(DATABASE, "testdb")
                         .build()
         );
+        ConnectionPoolConfiguration configuration = ConnectionPoolConfiguration.builder()
+                .connectionFactory(connectionFactory)
+                .initialSize(10)
+                .maxIdleTime(Duration.ofMillis(1000))
+                .maxSize(100)
+                .build();
+        return new ConnectionPool(configuration);
     }
+
 
     @Bean
     public R2dbcEntityTemplate r2dbcEntityTemplate(DatabaseClient databaseClient) {

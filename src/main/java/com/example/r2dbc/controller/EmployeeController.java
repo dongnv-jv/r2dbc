@@ -4,6 +4,7 @@ import com.example.r2dbc.entity.Employee;
 import com.example.r2dbc.excel.EmployeeExcelBuilder;
 import com.example.r2dbc.repository.EmployeeRepository;
 import com.example.r2dbc.service.EmployeeService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -32,13 +33,13 @@ import java.util.Objects;
  */
 @RestController
 @RequestMapping("/employees")
+@RequiredArgsConstructor
 public class EmployeeController {
 
-  @Autowired
-  private EmployeeRepository employeeRepository;
 
-  @Autowired
-  private EmployeeService employeeService;
+  private final EmployeeRepository employeeRepository;
+
+  private final EmployeeService employeeService;
 
   @PostMapping
   public Mono<Employee> saveEmployee(@RequestBody Employee employee){
