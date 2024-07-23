@@ -5,6 +5,8 @@ import com.example.r2dbc.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.r2dbc.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -25,6 +27,12 @@ public class EmployeeService {
     }
     public Flux<Employee> getAll() {
         return r2dbcEntityTemplate.select(Employee.class).all();
+    }
+
+    public Flux<Employee> getLimitedEmployees(int limit) {
+        return r2dbcEntityTemplate.select(Employee.class)
+                .matching(Query.query(Criteria.empty()).limit(limit))
+                .all();
     }
     public Flux<Employee> get() {
         return databaseClient
