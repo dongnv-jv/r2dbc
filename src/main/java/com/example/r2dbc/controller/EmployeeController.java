@@ -5,7 +5,6 @@ import com.example.r2dbc.excel.EmployeeExcelBuilder;
 import com.example.r2dbc.repository.EmployeeRepository;
 import com.example.r2dbc.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -20,13 +19,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Objects;
 
 /**
  * @author rishi
@@ -37,65 +33,67 @@ import java.util.Objects;
 public class EmployeeController {
 
 
-  private final EmployeeRepository employeeRepository;
+    private final EmployeeRepository employeeRepository;
 
-  private final EmployeeService employeeService;
+    private final EmployeeService employeeService;
 
-  @PostMapping
-  public Mono<Employee> saveEmployee(@RequestBody Employee employee){
-    return employeeRepository.save(employee);
-  }
+    @PostMapping
+    public Mono<Employee> saveEmployee(@RequestBody Employee employee) {
+        return employeeRepository.save(employee);
+    }
 
-  @GetMapping("/{id}")
-  public Mono<Employee> findOne(@PathVariable("id") Long id){
-    return employeeRepository.findById(id);
-  }
-  @GetMapping("/save")
-  public Mono<Employee> save(){
+    @GetMapping("/{id}")
+    public Mono<Employee> findOne(@PathVariable("id") Long id) {
+        return employeeRepository.findById(id);
+    }
 
-    return employeeService.saveAll().last();
-  }
+    @GetMapping("/save")
+    public Mono<Employee> save() {
 
-  @PutMapping
-  public Mono<Employee> updateEmployee(@RequestBody Employee employee){
-    return employeeRepository.save(employee);
-  }
+        return employeeService.saveAll().last();
+    }
 
-  @DeleteMapping("/{id}")
-  public Mono<Employee> deleteEmployee(@PathVariable("id") Long id){
-    return employeeRepository.findById(id)
-        .doOnSuccess(employee -> employeeRepository.delete(employee).subscribe());
-  }
+    @PutMapping
+    public Mono<Employee> updateEmployee(@RequestBody Employee employee) {
+        return employeeRepository.save(employee);
+    }
 
-  @GetMapping
-  public Flux<Employee> findAll(){
-    return employeeService.get();
-  }
-  @GetMapping("/download")
-  public ResponseEntity<ByteArrayResource> getFile() throws IOException {
+    @DeleteMapping("/{id}")
+    public Mono<Employee> deleteEmployee(@PathVariable("id") Long id) {
+        return employeeRepository.findById(id)
+                .doOnSuccess(employee -> employeeRepository.delete(employee).subscribe());
+    }
 
-    ByteArrayInputStream workbook= EmployeeExcelBuilder.generateExcelFromFlux(
-            employeeService.getAll()).block(Duration.ofMinutes(3));
-    HttpHeaders headers = new HttpHeaders();
-    headers.add("Content-Disposition", "attachment; filename=customers.xlsx");
+    @GetMapping
+    public Flux<Employee> findAll() {
+        return employeeService.get();
+    }
 
-    return ResponseEntity
-            .ok()
-            .headers(headers)
-            .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
-            .body(new ByteArrayResource(workbook.readAllBytes()));
+    @GetMapping("/download")
+    public ResponseEntity<ByteArrayResource> getFile() throws IOException {
 
-  }
+        ByteArrayInputStream workbook = EmployeeExcelBuilder.exportStudentsToExcel(
+                employeeService.getAll()).block(Duration.ofMinutes(3));
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=customers.xlsx");
 
-  @GetMapping(value = "/download1", produces = "application/vnd.ms-excel")
-  public Mono<ByteArrayResource> download() {
-    Mono<ByteArrayInputStream> workbook= EmployeeExcelBuilder.generateExcelFromFlux(
-            employeeService.getAll());
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
+                .body(new ByteArrayResource(workbook.readAllBytes()));
 
-    return workbook.flatMap(inputStream -> {
-        byte[] bytes = inputStream.readAllBytes();
-        ByteArrayResource resource = new ByteArrayResource(bytes);
-        return Mono.just(resource);
-    });
-  }
+    }
+
+    @GetMapping(value = "/download1", produces = "application/vnd.ms-excel")
+    public Mono<ByteArrayResource> download() {
+        Mono<ByteArrayInputStream> workbook = EmployeeExcelBuilder.exportStudentsToExcel(
+                employeeService.getAll());
+
+        return workbook.flatMap(inputStream -> {
+            byte[] bytes = inputStream.readAllBytes();
+            ByteArrayResource resource = new ByteArrayResource(bytes);
+            return Mono.just(resource);
+        });
+    }
 }

@@ -1,11 +1,6 @@
 package com.example.r2dbc.excel;
 
 import com.example.r2dbc.entity.Employee;
-//import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-//import org.apache.poi.ss.usermodel.Row;
-//import org.apache.poi.ss.usermodel.Sheet;
-//import org.apache.poi.ss.usermodel.Workbook;
-//import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.dhatim.fastexcel.Workbook;
 import org.dhatim.fastexcel.Worksheet;
 import reactor.core.publisher.Flux;
@@ -17,80 +12,39 @@ import java.io.IOException;
 
 public class EmployeeExcelBuilder {
 
+    private static final int MAX_ROWS_PER_SHEET = 1000000;
 
-//    public static Mono<ByteArrayInputStream> generateExcelFromFlux(Flux<Employee> studentFlux) {
-//        return Mono.create(sink -> {
-//            Workbook workbook = new XSSFWorkbook();
-//            ByteArrayOutputStream out = new ByteArrayOutputStream();
-//
-//            SheetWrapper sheetWrapper = new SheetWrapper(workbook);
-//
-//            // Sử dụng một biến để theo dõi chỉ số hàng hiện tại
-//            int[] rowIndex = {1};
-//
-//            // Subscribe to the Flux and write data to the Excel sheet
-//            studentFlux.subscribe(student -> {
-//                // Kiểm tra nếu số dòng vượt quá 1,000,000
-//                if (rowIndex[0] > 300000) {
-//                    sheetWrapper.createNewSheet(workbook);
-//                    rowIndex[0] = 1; // Đặt lại chỉ số hàng
-//                }
-//                Row row = sheetWrapper.sheet.createRow(rowIndex[0]++);
-//                row.createCell(0).setCellValue(student.getId());
-//                row.createCell(1).setCellValue(student.getName());
-//                row.createCell(2).setCellValue(student.getDepartment());
-//            }, sink::error, () -> {
-//                // Chuyển đổi workbook thành ByteArrayInputStream khi Flux hoàn thành
-//                try {
-//                    workbook.write(out);
-//                    ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(out.toByteArray());
-//                    sink.success(byteArrayInputStream);
-//                } catch (IOException e) {
-//                    sink.error(e);
-//                } finally {
-//                    try {
-//                        workbook.close();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            });
-//        });
-//    }
-private static final int MAX_ROWS_PER_SHEET = 500000;
+    public static Mono<ByteArrayInputStream> exportStudentsToExcel(Flux<Employee> students) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Workbook wb = new Workbook(out, "MyApp", "1.0");
+        Worksheet[] currentSheet = {wb.newWorksheet("Students1")};
+        int[] sheetIndex = {0};
+        int[] rowIndex = {0};
 
-    public static Mono<ByteArrayInputStream> generateExcelFromFlux(Flux<Employee> students) {
-        return students.collectList().flatMap(studentList -> {
-            try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-                Workbook wb = new Workbook(out, "MyApp", "1.0");
-                int sheetIndex = 0;
-                Worksheet ws = wb.newWorksheet("Students" + (sheetIndex + 1));
+        // Write headers to the first sheet
+        writeHeaders(currentSheet[0], rowIndex[0]++);
 
-                int rowIndex = 0;
-
-                // Write headers to the first sheet
-                writeHeaders(ws, rowIndex++);
-
-                for (Employee student : studentList) {
-                    if (rowIndex == MAX_ROWS_PER_SHEET) {
-                        // Move to the next sheet
-                        sheetIndex++;
-                        ws = wb.newWorksheet("Students" + (sheetIndex + 1));
-                        rowIndex = 0;
-                        // Write headers to the new sheet
-                        writeHeaders(ws, rowIndex++);
-                    }
-
-                    // Write student data
-                    writeStudentData(ws, rowIndex++, student);
-                }
-
-                wb.finish();
-                return Mono.just(new ByteArrayInputStream(out.toByteArray()));
-            } catch (IOException e) {
-                return Mono.error(e);
+        return students.flatMap(student -> {
+            if (rowIndex[0] == MAX_ROWS_PER_SHEET) {
+                // Move to the next sheet
+                sheetIndex[0]++;
+                currentSheet[0] = wb.newWorksheet("Students" + (sheetIndex[0] + 1));
+                rowIndex[0] = 0;
+                // Write headers to the new sheet
+                writeHeaders(currentSheet[0], rowIndex[0]++);
             }
-        });
+
+            // Write student data
+            writeStudentData(currentSheet[0], rowIndex[0]++, student);
+            return Mono.empty();
+        }).then(Mono.fromCallable(() -> {
+            try {
+                wb.finish();
+                return new ByteArrayInputStream(out.toByteArray());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }));
     }
 
     private static void writeHeaders(Worksheet ws, int rowIndex) {

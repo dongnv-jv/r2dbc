@@ -7,8 +7,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-import javax.annotation.Generated;
-
 
 /**
  * @author rishi
@@ -20,15 +18,15 @@ import javax.annotation.Generated;
 @AllArgsConstructor
 public class Employee {
 
-  @Id
-  private Long id;
+    @Id
+    private Long id;
 
-  private String name;
+    private String name;
 
-  private String department;
+    private String department;
 
-  public Employee(String name, String department) {
-    this.name = name;
-    this.department = department;
-  }
+    public Employee(String name, String department) {
+        this.name = name;
+        this.department = department;
+    }
 }

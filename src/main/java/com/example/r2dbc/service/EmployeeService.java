@@ -21,10 +21,11 @@ public class EmployeeService {
 
     public Flux<Employee> saveAll() {
         Flux<Employee> studentFlux = Flux.range(1, 1_000_000)
-                .map(i -> new Employee("Dong "+i, "Student-" + i));
+                .map(i -> new Employee("Dong " + i, "Student-" + i));
         return employeeRepository.saveAll(studentFlux);
 
     }
+
     public Flux<Employee> getAll() {
         return r2dbcEntityTemplate.select(Employee.class).all();
     }
@@ -34,13 +35,15 @@ public class EmployeeService {
                 .matching(Query.query(Criteria.empty()).limit(limit))
                 .all();
     }
+
     public Flux<Employee> get() {
         return databaseClient
                 .execute("select * from employee")
-                .map((row, rowMetadata) -> new Employee(row.get("name", String.class),row.get("department", String.class))
+                .map((row, rowMetadata) -> new Employee(row.get("name", String.class), row.get("department", String.class))
                 )
                 .all();
     }
+
     public Mono<String> callStoredProcedure(int inputParam) {
         return databaseClient
                 .execute("CALL stored_procedure_name(:inputParam, @outputParam)")

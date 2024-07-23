@@ -6,4 +6,5 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 /**
  * @author rishi
  */
-public interface EmployeeRepository extends ReactiveCrudRepository<Employee, Long> {}
+public interface EmployeeRepository extends ReactiveCrudRepository<Employee, Long> {
+}
