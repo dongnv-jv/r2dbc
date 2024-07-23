@@ -90,7 +90,7 @@ public class EmployeeController {
   @GetMapping(value = "/download1", produces = "application/vnd.ms-excel")
   public Mono<ByteArrayResource> download() {
     Mono<ByteArrayInputStream> workbook= EmployeeExcelBuilder.generateExcelFromFlux(
-            employeeService.getLimitedEmployees(700000));
+            employeeService.getAll());
 
     return workbook.flatMap(inputStream -> {
         byte[] bytes = inputStream.readAllBytes();
